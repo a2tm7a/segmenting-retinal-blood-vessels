@@ -1,0 +1,8 @@
+[data attributes]
+#Dimensions of the patches extracted from the full images
+patch_height = 48
+patch_width = 48
+
+[training settings]
+#number of patches per image:
+N_subimgs = 10000
