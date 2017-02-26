@@ -6,3 +6,8 @@ patch_width = 48
 [training settings]
 #number of patches per image:
 N_subimgs = 10000
+#if patches are extracted only inside the field of view:
+inside_FOV = False
+
+[data paths]
+path_local =  ./DRIVE_datasets_training_testing/

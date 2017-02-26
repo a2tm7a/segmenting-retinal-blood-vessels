@@ -17,9 +17,8 @@ def get_img_training(img,
 
     # train_imgs = my_PreProc(train_imgs_original)
 
-
     # Converting white pixels to 1 and black to 0
-    groundTruth /= 255.
+    groundTruth = groundTruth / 255.
 
     img = img[:, 9:574, :]  # cut bottom and top so now it is 565*565
     groundTruth = groundTruth[:, 9:574, :]  # cut bottom and top so now it is 565*565
