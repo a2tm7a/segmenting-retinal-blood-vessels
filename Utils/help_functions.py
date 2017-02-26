@@ -1,6 +1,8 @@
-
 # TODO: Remove this and use one hot encoding
 # prepare the mask in the right shape for the Unet
+import h5py
+
+
 def masks_Unet(masks):
     assert (len(masks.shape) == 4)  # 4D arrays
     assert (masks.shape[1] == 1)  # check the channel is 1
@@ -17,3 +19,8 @@ def masks_Unet(masks):
                 new_masks[i, j, 0] = 0
                 new_masks[i, j, 1] = 1
     return new_masks
+
+
+def load_hdf5(infile):
+    with h5py.File(infile, "r") as f:  # "with" close the file after its nested commands
+        return f["img"][()], f["groundTruth"][()]
