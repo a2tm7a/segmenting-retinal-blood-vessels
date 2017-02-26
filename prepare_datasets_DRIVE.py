@@ -3,6 +3,7 @@ from PIL import Image
 import h5py
 import numpy as np
 import os
+from Utils.extract_patches import get_img_training
 
 
 def write_hdf5(arr, outfile, name):
@@ -38,14 +39,15 @@ def generate_datasets(imgs_dir, groundTruth_dir, borderMasks_dir, train_test="nu
 
             # original
             print "original image: " + files[i]
-            img = Image.open(imgs_dir + files[i])
-            img = np.asarray(img)
+            temp_img = Image.open(imgs_dir + files[i])
+            print "size",temp_img.shape
+            img = np.asarray(temp_img)
 
             # corresponding ground truth
             groundTruth_name = files[i][0:2] + "_manual1.gif"
             print "ground truth name: " + groundTruth_name
-            groundTruth = Image.open(groundTruth_dir + groundTruth_name)
-            groundTruth = np.asarray(groundTruth)
+            temp_groundTruth = Image.open(groundTruth_dir + groundTruth_name)
+            groundTruth = np.asarray(temp_groundTruth)
 
             # corresponding border masks
             border_masks_name = ""
@@ -57,8 +59,8 @@ def generate_datasets(imgs_dir, groundTruth_dir, borderMasks_dir, train_test="nu
                 print "specify if train or test!!"
                 exit()
             print "border masks name: " + border_masks_name
-            border_mask = Image.open(borderMasks_dir + border_masks_name)
-            border_mask = np.asarray(border_mask)
+            temp_border_mask = Image.open(borderMasks_dir + border_masks_name)
+            border_mask = np.asarray(temp_border_mask)
 
 
 generate_datasets(original_imgs_train, groundTruth_imgs_train,
