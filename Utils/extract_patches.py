@@ -24,7 +24,7 @@ def get_img_training(img,
     img = img[:, 9:574, :]  # cut bottom and top so now it is 565*565
     groundTruth = groundTruth[:, :, 9:574, :]  # cut bottom and top so now it is 565*565
 
-    data_consistency_check(img, groundTruth)
+    data_consistency_check_img(img, groundTruth)
 
     # check masks are within 0-1
     assert (np.min(groundTruth) == 0 and np.max(groundTruth) == 1)
@@ -35,16 +35,16 @@ def get_img_training(img,
     print "Ground Truth are within 0-1\n"
 
     # extract the TRAINING patches from the full images
-    patches_img, patches_groundTruth = extract_random(train_imgs, train_masks, patch_height, patch_width,
+    patches_img, patches_groundTruth = extract_random(img, groundTruth, patch_height, patch_width,
                                                       N_subimgs, inside_FOV)
-    data_consistency_check(patches_imgs_train, patches_masks_train)
+    data_consistency_check_patches(patches_img, patches_groundTruth)
 
     print "\ntrain PATCHES images/masks shape:"
-    print patches_imgs_train.shape
-    print "train PATCHES images range (min-max): " + str(np.min(patches_imgs_train)) + ' - ' + str(
-        np.max(patches_imgs_train))
+    print patches_img.shape
+    print "train PATCHES images range (min-max): " + str(np.min(patches_img)) + ' - ' + str(
+        np.max(patches_img))
 
-    return patches_imgs_train, patches_masks_train  # , patches_imgs_test, patches_masks_test
+    return patches_img, patches_groundTruth  # , patches_imgs_test, patches_masks_test
 
 
 # extract patches randomly in the full image
@@ -72,25 +72,34 @@ def extract_random(full_img, full_groundTruth, patch_h, patch_w, N_patches, insi
         # print "y_center " +str(y_center)
         # check whether the patch is fully contained in the FOV
         if inside:
-            if is_patch_inside_FOV(x_center, y_center, img_w, img_h, patch_h) == False:
+            if not is_patch_inside_FOV(x_center, y_center, img_w, img_h, patch_h):
                 continue
-        patch = full_imgs[i, :, y_center - int(patch_h / 2):y_center + int(patch_h / 2),
+        patch = full_img[:, y_center - int(patch_h / 2):y_center + int(patch_h / 2),
                 x_center - int(patch_w / 2):x_center + int(patch_w / 2)]
-        patch_mask = full_masks[i, :, y_center - int(patch_h / 2):y_center + int(patch_h / 2),
-                     x_center - int(patch_w / 2):x_center + int(patch_w / 2)]
+        patch_groundTruth = full_groundTruth[:, y_center - int(patch_h / 2):y_center + int(patch_h / 2),
+                            x_center - int(patch_w / 2):x_center + int(patch_w / 2)]
         patches[iter_tot] = patch
-        patches_masks[iter_tot] = patch_mask
+        patches_groundTruth[iter_tot] = patch_groundTruth
         iter_tot += 1  # total
         k += 1  # per full_img
-    return patches, patches_masks
+    return patches, patches_groundTruth
 
 
-def data_consistency_check(img, mask):
-    assert (len(img.shape) == len(mask.shape))
-    assert (img.shape[1] == mask.shape[1])
-    assert (img.shape[2] == mask.shape[2])
-    assert (mask.shape[0] == 1)
+def data_consistency_check_img(img, groundTruth):
+    assert (len(img.shape) == len(groundTruth.shape))
+    assert (img.shape[1] == groundTruth.shape[1])
+    assert (img.shape[2] == groundTruth.shape[2])
+    assert (groundTruth.shape[0] == 1)
     assert (img.shape[0] == 1 or img.shape[0] == 3)
+
+
+def data_consistency_check_patches(patches, patches_groundTruth):
+    assert (len(patches.shape) == len(patches_groundTruth.shape))
+    assert (patches.shape[0] == patches_groundTruth.shape[0])
+    assert (patches.shape[2] == patches_groundTruth.shape[2])
+    assert (patches.shape[3] == patches_groundTruth.shape[3])
+    assert (patches_groundTruth.shape[1] == 1)
+    assert (patches.shape[1] == 1 or patches.shape[1] == 3)
 
 
 # check if the patch is fully contained in the FOV
