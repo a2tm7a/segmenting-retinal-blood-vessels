@@ -1,0 +1,19 @@
+
+# TODO: Remove this and use one hot encoding
+# prepare the mask in the right shape for the Unet
+def masks_Unet(masks):
+    assert (len(masks.shape) == 4)  # 4D arrays
+    assert (masks.shape[1] == 1)  # check the channel is 1
+    im_h = masks.shape[2]
+    im_w = masks.shape[3]
+    masks = np.reshape(masks, (masks.shape[0], im_h * im_w))
+    new_masks = np.empty((masks.shape[0], im_h * im_w, 2))
+    for i in range(masks.shape[0]):
+        for j in range(im_h * im_w):
+            if masks[i, j] == 0:
+                new_masks[i, j, 0] = 1
+                new_masks[i, j, 1] = 0
+            else:
+                new_masks[i, j, 0] = 0
+                new_masks[i, j, 1] = 1
+    return new_masks
