@@ -1,6 +1,7 @@
 # TODO: Remove this and use one hot encoding
 # prepare the mask in the right shape for the Unet
 import h5py
+import numpy as np
 
 
 def masks_Unet(masks):
