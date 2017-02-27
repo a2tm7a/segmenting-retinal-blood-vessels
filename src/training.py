@@ -98,3 +98,6 @@ for i in range(5):
         print y_train.shape
 
         model.fit(X_train, y_train, nb_epoch=1, validation_split=.1, verbose=1)
+
+        del X_train
+        del y_train
