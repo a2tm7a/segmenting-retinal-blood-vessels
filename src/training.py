@@ -6,7 +6,7 @@ from keras.layers import Input, merge, Convolution2D, MaxPooling2D, UpSampling2D
 import numpy as np
 import sys
 
-sys.path.append('../../Retina_Lab_Based/')
+sys.path.append('../../segmenting-retinal-blood-vessels/')
 from Utils.help_functions import load_hdf5, masks_Unet
 
 # Load config params
