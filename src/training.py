@@ -6,17 +6,8 @@ from keras.layers import Input, merge, Convolution2D, MaxPooling2D, UpSampling2D
 import numpy as np
 import sys
 
-
-# TODO: Use function in helpfunction
-# sys.path.append('../Utils')
-# from help_functions import load_hdf5
-# from Utils.help_functions import *
-
-
-def load_hdf5(infile):
-    with h5py.File(infile, "r") as f:  # "with" close the file after its nested commands
-        return f["img"][()], f["groundTruth"][()]
-
+sys.path.append('/home/manchanda/Retina_Lab_Based/')
+from Utils.help_functions import load_hdf5
 
 # Load config params
 config = ConfigParser.RawConfigParser()
@@ -87,7 +78,7 @@ for i in range(5):
         temp_img1, temp_gt1 = load_hdf5(temp_path1)
         temp_img2, temp_gt2 = load_hdf5(temp_path2)
         temp_img3, temp_gt3 = load_hdf5(temp_path3)
-        j = j + 3
+        j += 3
         X_train = np.append(temp_img1, temp_img2, axis=0)
         y_train = np.append(temp_gt1, temp_gt2, axis=0)
 
@@ -96,8 +87,8 @@ for i in range(5):
         del temp_img2
         del temp_gt2
 
-        X_train = np.append(X_train,temp_img3,axis=0)
-        y_train = np.append(y_train,temp_gt3,axis=0)
+        X_train = np.append(X_train, temp_img3, axis=0)
+        y_train = np.append(y_train, temp_gt3, axis=0)
 
         del temp_img3
         del temp_gt3
