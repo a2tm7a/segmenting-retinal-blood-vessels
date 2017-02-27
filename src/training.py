@@ -7,7 +7,7 @@ import numpy as np
 import sys
 
 sys.path.append('/home/manchanda/Retina_Lab_Based/')
-from Utils.help_functions import load_hdf5
+from Utils.help_functions import load_hdf5, masks_Unet
 
 # Load config params
 config = ConfigParser.RawConfigParser()
@@ -94,3 +94,7 @@ for i in range(5):
         del temp_gt3
 
         print X_train.shape, y_train.shape
+        y_train = masks_Unet(y_train)
+        print y_train.shape
+
+        model.fit(X_train, y_train, nb_epoch=1, validation_split=.1, verbose=1)
