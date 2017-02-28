@@ -64,8 +64,9 @@ def get_unet(n_ch, patch_height, patch_width):
 model = get_unet(n_ch=int(config.get('data attributes', 'channels')),
                  patch_width=int(config.get('data attributes', 'patch_width')),
                  patch_height=int(config.get('data attributes', 'patch_height')))
+model.summary()
 
-for i in range(5):
+for i in range(1):
     input_sequence = np.arange(21, 39)
     np.random.shuffle(input_sequence)
     print input_sequence
@@ -97,7 +98,7 @@ for i in range(5):
         y_train = masks_Unet(y_train)
         print y_train.shape
 
-        model.fit(X_train, y_train, nb_epoch=1, validation_split=.1, verbose=1)
+        model.fit(X_train, y_train, nb_epoch=1, validation_split=.1, verbose=1, shuffle=True)
 
         del X_train
         del y_train
