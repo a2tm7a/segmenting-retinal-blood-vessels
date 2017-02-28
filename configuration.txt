@@ -12,3 +12,4 @@ inside_FOV = False
 
 [data paths]
 path_local =  ./DRIVE_datasets_training_testing/
+saved_weights = ./saved_weights/

@@ -67,12 +67,13 @@ model = get_unet(n_ch=int(config.get('data attributes', 'channels')),
 model.summary()
 
 for i in range(1):
+    # Images from 21 to 38 are taken for training
     input_sequence = np.arange(21, 39)
     np.random.shuffle(input_sequence)
     print input_sequence
     j = 0
     while j < len(input_sequence):
-        print ("." + dataset_path)
+        print input_sequence[j], input_sequence[j + 1], input_sequence[j + 2]
         temp_path1 = "." + dataset_path + "training_patches_" + str(input_sequence[j])
         temp_path2 = "." + dataset_path + "training_patches_" + str(input_sequence[j + 1])
         temp_path3 = "." + dataset_path + "training_patches_" + str(input_sequence[j + 2])
@@ -102,3 +103,25 @@ for i in range(1):
 
         del X_train
         del y_train
+
+# TODO: Save model weights
+model.save_weights(str(config.get('data paths', 'saved_weights')) + "model.h5", overwrite=True)
+
+# Testing on the left 2 images
+temp_path1 = "." + dataset_path + "training_patches_39"
+temp_path2 = "." + dataset_path + "training_patches_40"
+
+temp_img1, temp_gt1 = load_hdf5(temp_path1)
+temp_img2, temp_gt2 = load_hdf5(temp_path2)
+
+X_test = np.append(temp_img1, temp_img2, axis=0)
+y_test = np.append(temp_gt1, temp_gt2, axis=0)
+
+del temp_img1
+del temp_gt1
+del temp_img2
+del temp_gt2
+
+score = model.evaluate(X_test, masks_Unet(y_test), verbose=1)
+
+print score[1], score[0]
