@@ -1,2 +1,5 @@
 Learning one layer at a time
 Reducing learning rate if not good
+Check confusion matrix
+Same no. of +ve and -ve examples or increase +ve examples
+Draw ROC
