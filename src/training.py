@@ -6,6 +6,8 @@ from keras.layers import Input, merge, Convolution2D, MaxPooling2D, UpSampling2D
 import numpy as np
 import sys
 
+np.random.seed(1234)
+
 sys.path.append('../../segmenting-retinal-blood-vessels/')
 from Utils.help_functions import load_hdf5, masks_Unet
 
@@ -99,12 +101,16 @@ for i in range(1):
         y_train = masks_Unet(y_train)
         print y_train.shape
 
-        model.fit(X_train, y_train, nb_epoch=1, validation_split=.1, verbose=1, shuffle=True)
+        # Shuffle data
+        permutation = np.random.permutation(X_train.shape[0])
+        X_train = X_train[permutation]
+        y_train = y_train[permutation]
+
+        model.fit(X_train, y_train, nb_epoch=1, validation_split=.1, verbose=1)
 
         del X_train
         del y_train
 
-# TODO: Save model weights
 model.save_weights(str(config.get('data paths', 'saved_weights')) + "model.h5", overwrite=True)
 
 # Testing on the left 2 images
