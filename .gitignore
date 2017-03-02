@@ -2,3 +2,4 @@
 DRIVE
 DRIVE_datasets_training_testing
 *.pyc
+src/logs
