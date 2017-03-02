@@ -111,7 +111,7 @@ for i in range(1):
         del X_train
         del y_train
 
-model.save_weights(str(config.get('data paths', 'saved_weights')) + "model.h5", overwrite=True)
+model.save_weights("." + str(config.get('data paths', 'saved_weights')) + "model.h5", overwrite=True)
 
 # Testing on the left 2 images
 temp_path1 = "." + dataset_path + "training_patches_39"
