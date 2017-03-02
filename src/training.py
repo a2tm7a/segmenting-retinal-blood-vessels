@@ -5,6 +5,7 @@ from keras.models import Model
 from keras.layers import Input, merge, Convolution2D, MaxPooling2D, UpSampling2D, Reshape, core, Dropout
 import numpy as np
 import sys
+from sklearn.metrics import classification_report, confusion_matrix
 
 np.random.seed(1234)
 
@@ -59,10 +60,6 @@ def get_unet(n_ch, patch_height, patch_width):
     return model
 
 
-# def trainmodel_epoch(train_sequence, val_sequence, model):
-#     return final_training_accuracy, final_validation_accuracy
-
-
 model = get_unet(n_ch=int(config.get('data attributes', 'channels')),
                  patch_width=int(config.get('data attributes', 'patch_width')),
                  patch_height=int(config.get('data attributes', 'patch_height')))
@@ -72,10 +69,16 @@ for i in range(1):
     # Images from 21 to 38 are taken for training
     input_sequence = np.arange(21, 39)
     np.random.shuffle(input_sequence)
-    print input_sequence
+    print '\n' + str(input_sequence), str(i) + "th iteration"
+
     j = 0
-    while j < len(input_sequence):
-        print input_sequence[j], input_sequence[j + 1], input_sequence[j + 2]
+
+    # Testing purpose
+    # while j < len(input_sequence):
+    while j < 1:
+        print str(j) + " ", str(j + 1) + " ", str(j + 2) + " -> ", input_sequence[j], input_sequence[j + 1], \
+            input_sequence[j + 2]
+
         temp_path1 = "." + dataset_path + "training_patches_" + str(input_sequence[j])
         temp_path2 = "." + dataset_path + "training_patches_" + str(input_sequence[j + 1])
         temp_path3 = "." + dataset_path + "training_patches_" + str(input_sequence[j + 2])
@@ -111,7 +114,8 @@ for i in range(1):
         del X_train
         del y_train
 
-model.save_weights("." + str(config.get('data paths', 'saved_weights')) + "model.h5", overwrite=True)
+model.save_weights('..' + str(config.get('data paths', 'saved_weights')) + "model.h5", overwrite=True)
+
 
 # Testing on the left 2 images
 temp_path1 = "." + dataset_path + "training_patches_39"
@@ -122,12 +126,21 @@ temp_img2, temp_gt2 = load_hdf5(temp_path2)
 
 X_test = np.append(temp_img1, temp_img2, axis=0)
 y_test = np.append(temp_gt1, temp_gt2, axis=0)
+y_test = masks_Unet(y_test)
 
 del temp_img1
 del temp_gt1
 del temp_img2
 del temp_gt2
 
-score = model.evaluate(X_test, masks_Unet(y_test), verbose=1)
-
+print "Validation Data"
+score = model.evaluate(X_test, y_test, verbose=1)
 print score[1], score[0]
+
+y_pred = model.predict(X_test)
+y_pred = np.argmax(y_pred, axis=1)
+
+target_names = ['Class 0', 'Class 1']
+print y_test, y_pred
+print classification_report(np.argmax(y_test, axis=1), y_pred, target_names=target_names)
+print (confusion_matrix(np.argmax(y_test, axis=1), y_pred))
