@@ -1,6 +1,12 @@
+import ConfigParser
 import random
 
 import numpy as np
+
+
+# Load config params
+config = ConfigParser.RawConfigParser()
+config.read('configuration.txt')
 
 
 # Load the original img and return the extracted patches
@@ -55,7 +61,7 @@ def extract_random(full_img, full_groundTruth, patch_h, patch_w, N_patches, insi
     assert (full_img.shape[1] == full_groundTruth.shape[1] and full_img.shape[2] == full_groundTruth.shape[2])
 
     patches = np.empty((N_patches, full_img.shape[0], patch_h, patch_w))
-    patches_groundTruth = np.empty((N_patches, full_groundTruth.shape[0], patch_h, patch_w))
+    patches_groundTruth = np.empty((N_patches,))
 
     img_h = full_img.shape[1]  # height of the full image
     img_w = full_img.shape[2]  # width of the full image
@@ -65,18 +71,21 @@ def extract_random(full_img, full_groundTruth, patch_h, patch_w, N_patches, insi
     iter_tot = 0  # iter over the total number of patches (N_patches)
     k = 0
     while k < N_patches:
-        x_center = random.randint(0 + int(patch_w / 2), img_w - int(patch_w / 2))
-        # print "x_center " +str(x_center)
-        y_center = random.randint(0 + int(patch_h / 2), img_h - int(patch_h / 2))
-        # print "y_center " +str(y_center)
+        # img_w - 1 to make sure if (565 - 1 - 13) is center element then 564 is 13th element
+        x_center = random.randint(0 + int(patch_w / 2), (img_w - 1) - int(patch_w / 2))
+
+        y_center = random.randint(0 + int(patch_h / 2), (img_h - 1) - int(patch_h / 2))
+
         # check whether the patch is fully contained in the FOV
         if inside:
             if not is_patch_inside_FOV(x_center, y_center, img_w, img_h, patch_h):
                 continue
-        patch = full_img[:, y_center - int(patch_h / 2):y_center + int(patch_h / 2),
-                x_center - int(patch_w / 2):x_center + int(patch_w / 2)]
-        patch_groundTruth = full_groundTruth[:, y_center - int(patch_h / 2):y_center + int(patch_h / 2),
-                            x_center - int(patch_w / 2):x_center + int(patch_w / 2)]
+
+        # y_center + int(patch_h / 2) + 1 so that total length before and after the center element is same
+        patch = full_img[:, y_center - int(patch_h / 2):y_center + int(patch_h / 2) + 1,
+                x_center - int(patch_w / 2):x_center + int(patch_w / 2) + 1]
+
+        patch_groundTruth = full_groundTruth[0, y_center, x_center]
         patches[iter_tot] = patch
         patches_groundTruth[iter_tot] = patch_groundTruth
         iter_tot += 1  # total
@@ -93,11 +102,13 @@ def data_consistency_check_img(img, groundTruth):
 
 
 def data_consistency_check_patches(patches, patches_groundTruth):
-    assert (len(patches.shape) == len(patches_groundTruth.shape))
+    assert (len(patches.shape) == 4)
+    assert (len(patches_groundTruth.shape) == 1)
     assert (patches.shape[0] == patches_groundTruth.shape[0])
-    assert (patches.shape[2] == patches_groundTruth.shape[2])
-    assert (patches.shape[3] == patches_groundTruth.shape[3])
-    assert (patches_groundTruth.shape[1] == 1)
+
+    assert (patches.shape[2] == int(config.get('data attributes', 'patch_height')))
+    assert (patches.shape[3] == int(config.get('data attributes', 'patch_width')))
+
     assert (patches.shape[1] == 1 or patches.shape[1] == 3)
 
 

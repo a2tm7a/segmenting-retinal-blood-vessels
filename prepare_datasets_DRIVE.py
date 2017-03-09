@@ -26,7 +26,6 @@ borderMasks_imgs_test = "./DRIVE/test/mask/"
 
 
 Nimgs = 20
-channels = 3
 height = 584
 width = 565
 
@@ -93,6 +92,7 @@ def generate_datasets(imgs_dir, groundTruth_dir, borderMasks_dir, train_test="nu
                                                                 inside_FOV=config.getboolean('training settings',
                                                                                              'inside_FOV'))
 
+            print "Saving data shape", patches_img.shape, patches_groundTruth.shape
             write_hdf5(img=patches_img, outfile=dataset_path + "training_patches_" + files[i][0:2],
                        groundTruth=patches_groundTruth)
 

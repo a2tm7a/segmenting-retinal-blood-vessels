@@ -1,7 +1,7 @@
 [data attributes]
 #Dimensions of the patches extracted from the full images
-patch_height = 48
-patch_width = 48
+patch_height = 27
+patch_width = 27
 channels = 3
 
 [training settings]
