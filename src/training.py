@@ -100,19 +100,23 @@ for i in range(1):
 
         X_train = np.append(X_train, temp_img3, axis=0)
         y_train = np.append(y_train, temp_gt3, axis=0)
-
+	
         # TODO: Temp
-        positive_examples = 0
+        print y_train.dtype
+	positive_examples = 0
         negative_examples = 0
         for i in range(y_train.shape[0]):
-            if i == 1:
-                positive_examples+=1
-            elif i == 0:
-              negative_examples+=1
-            else:
-                print "Something else"
+        
+		if y_train[i] == 1:
+			positive_examples+=1
+		elif y_train[i] == 0:
+			negative_examples+=1
+		else:
+			print "Something else"
+	
         print positive_examples,negative_examples
-
+	
+	
         del temp_img3
         del temp_gt3
 
@@ -157,5 +161,6 @@ y_pred = np.argmax(y_pred, axis=1)
 
 target_names = ['Class 0', 'Class 1']
 print y_test, y_pred
+print np.sum(y_test,axis=0), np.sum(y_pred)
 print classification_report(np.argmax(y_test, axis=1), y_pred, target_names=target_names)
 print (confusion_matrix(np.argmax(y_test, axis=1), y_pred))
