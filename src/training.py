@@ -5,13 +5,13 @@ from keras.models import Model
 from keras.layers import Input, merge, Convolution2D, MaxPooling2D, UpSampling2D, Reshape, core, Dropout
 import numpy as np
 import sys
-from sklearn.metrics import classification_report, confusion_matrix
 from keras.utils import np_utils
 
 np.random.seed(1234)
 
 sys.path.append('../../segmenting-retinal-blood-vessels/')
-from Utils.help_functions import load_hdf5, masks_Unet
+from Utils.help_functions import load_hdf5
+from Utils.help_functions import print_confusion_matrix
 
 # Load config params
 config = ConfigParser.RawConfigParser()
@@ -52,7 +52,7 @@ def get_unet(n_ch, patch_height, patch_width):
     # conv6 = core.Reshape((2, patch_height * patch_width))(conv6)
     # conv6 = core.Permute((2, 1))(conv6)
     ############
-    conv6 = core.Flatten()(conv5)
+    conv6 = core.Flatten()(conv6)
     conv7 = core.Dense(2)(conv6)
     conv7 = core.Activation('softmax')(conv7)
 
@@ -69,15 +69,15 @@ model = get_unet(n_ch=int(config.get('data attributes', 'channels')),
                  patch_height=int(config.get('data attributes', 'patch_height')))
 model.summary()
 
-for i in range(1):
+for epoch in range(1):
     # Images from 21 to 38 are taken for training
     input_sequence = np.arange(21, 39)
     np.random.shuffle(input_sequence)
-    print '\n' + str(input_sequence), str(i) + "th iteration"
+    print '\n' + str(input_sequence), str(epoch) + "th iteration"
 
     j = 0
     X_train = None
-    X_test = None
+    y_train = None
     # Testing purpose
     while j < len(input_sequence):
         print str(j) + " ", " data"
@@ -100,7 +100,6 @@ for i in range(1):
     positive_examples = 0
     negative_examples = 0
     for i in range(y_train.shape[0]):
-
         if y_train[i] == 1:
             positive_examples += 1
         elif y_train[i] == 0:
@@ -123,6 +122,9 @@ for i in range(1):
 
     del X_train
     del y_train
+
+    y_pred = model.predict(X_train)
+    print_confusion_matrix(y_pred, y_train)
 
 model.save_weights('.' + str(config.get('data paths', 'saved_weights')) + "model.h5", overwrite=True)
 
@@ -147,10 +149,4 @@ score = model.evaluate(X_test, y_test, verbose=1)
 print score[1], score[0]
 
 y_pred = model.predict(X_test)
-y_pred = np.argmax(y_pred, axis=1)
-
-target_names = ['Class 0', 'Class 1']
-print y_test, y_pred
-print np.sum(y_test, axis=0), np.sum(y_pred)
-print classification_report(np.argmax(y_test, axis=1), y_pred, target_names=target_names)
-print (confusion_matrix(np.argmax(y_test, axis=1), y_pred))
+print_confusion_matrix(y_pred, y_test)
