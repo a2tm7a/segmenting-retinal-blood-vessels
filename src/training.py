@@ -80,13 +80,12 @@ for i in range(1):
     X_test = None
     # Testing purpose
     while j < len(input_sequence):
-        print str(j) + " ", str(j + 1) + " ", str(j + 2) + " -> ", input_sequence[j], input_sequence[j + 1], \
-            input_sequence[j + 2]
+        print str(j) + " ", " data"
 
         temp_path1 = "." + dataset_path + "training_patches_" + str(input_sequence[j])
         temp_img1, temp_gt1 = load_hdf5(temp_path1)
         j += 1
-        if X_train == None:
+        if X_train is None:
             X_train = temp_img1
             y_train = temp_gt1
         else:
