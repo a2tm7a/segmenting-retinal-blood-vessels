@@ -76,62 +76,54 @@ for i in range(1):
     print '\n' + str(input_sequence), str(i) + "th iteration"
 
     j = 0
-
+    X_train = None
+    X_test = None
     # Testing purpose
-    # while j < len(input_sequence):
-    while j < 1:
+    while j < len(input_sequence):
         print str(j) + " ", str(j + 1) + " ", str(j + 2) + " -> ", input_sequence[j], input_sequence[j + 1], \
             input_sequence[j + 2]
 
         temp_path1 = "." + dataset_path + "training_patches_" + str(input_sequence[j])
-        temp_path2 = "." + dataset_path + "training_patches_" + str(input_sequence[j + 1])
-        temp_path3 = "." + dataset_path + "training_patches_" + str(input_sequence[j + 2])
         temp_img1, temp_gt1 = load_hdf5(temp_path1)
-        temp_img2, temp_gt2 = load_hdf5(temp_path2)
-        temp_img3, temp_gt3 = load_hdf5(temp_path3)
-        j += 3
-        X_train = np.append(temp_img1, temp_img2, axis=0)
-        y_train = np.append(temp_gt1, temp_gt2, axis=0)
+        j += 1
+        if X_train == None:
+            X_train = temp_img1
+            y_train = temp_gt1
+        else:
+            X_train = np.append(X_train, temp_img1, axis=0)
+            y_train = np.append(y_train, temp_gt1, axis=0)
 
         del temp_img1
         del temp_gt1
-        del temp_img2
-        del temp_gt2
 
-        X_train = np.append(X_train, temp_img3, axis=0)
-        y_train = np.append(y_train, temp_gt3, axis=0)
+    # TODO: Temp
+    print y_train.dtype
+    positive_examples = 0
+    negative_examples = 0
+    for i in range(y_train.shape[0]):
 
-        # TODO: Temp
-        print y_train.dtype
-        positive_examples = 0
-        negative_examples = 0
-        for i in range(y_train.shape[0]):
+        if y_train[i] == 1:
+            positive_examples += 1
+        elif y_train[i] == 0:
+            negative_examples += 1
+        else:
+            print "Something else"
 
-            if y_train[i] == 1:
-                positive_examples += 1
-            elif y_train[i] == 0:
-                negative_examples += 1
-            else:
-                print "Something else"
+    print positive_examples, negative_examples
 
-        print positive_examples, negative_examples
+    print "Before y_train", X_train.shape, y_train.shape
+    y_train = np_utils.to_categorical(y_train, nb_classes)
+    print "After y_train", y_train.shape
 
-        del temp_img3
-        del temp_gt3
+    # Shuffle data
+    permutation = np.random.permutation(X_train.shape[0])
+    X_train = X_train[permutation]
+    y_train = y_train[permutation]
 
-        print "Before y_train", X_train.shape, y_train.shape
-        y_train = np_utils.to_categorical(y_train, nb_classes)
-        print "After y_train", y_train.shape
+    model.fit(X_train, y_train, nb_epoch=1, validation_split=.1, verbose=1)
 
-        # Shuffle data
-        permutation = np.random.permutation(X_train.shape[0])
-        X_train = X_train[permutation]
-        y_train = y_train[permutation]
-
-        model.fit(X_train, y_train, nb_epoch=1, validation_split=.1, verbose=1)
-
-        del X_train
-        del y_train
+    del X_train
+    del y_train
 
 model.save_weights('.' + str(config.get('data paths', 'saved_weights')) + "model.h5", overwrite=True)
 
