@@ -5,8 +5,7 @@ import numpy as np
 
 
 def masks_Unet(masks):
-    assert (len(masks.shape) == 4)  # 4D arrays
-    assert (masks.shape[1] == 1)  # check the channel is 1
+    assert (len(masks.shape) == 1)  # 4D arrays
     im_h = masks.shape[2]
     im_w = masks.shape[3]
     masks = np.reshape(masks, (masks.shape[0], im_h * im_w))
