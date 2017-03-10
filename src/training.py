@@ -36,26 +36,28 @@ def get_unet(n_ch, patch_height, patch_width):
     conv3 = Dropout(0.2)(conv3)
     conv3 = Convolution2D(128, 3, 3, activation='relu', border_mode='same')(conv3)
 
-    up1 = merge([UpSampling2D(size=(2, 2))(conv3), conv2], mode='concat', concat_axis=1)
-    conv4 = Convolution2D(64, 3, 3, activation='relu', border_mode='same')(up1)
+    #up1 = merge([UpSampling2D(size=(2, 2))(conv3), conv2], mode='concat', concat_axis=1)
+    conv4 = Convolution2D(64, 3, 3, activation='relu', border_mode='same')(conv3)
     conv4 = Dropout(0.2)(conv4)
     conv4 = Convolution2D(64, 3, 3, activation='relu', border_mode='same')(conv4)
     #
-    up2 = merge([UpSampling2D(size=(2, 2))(conv4), conv1], mode='concat', concat_axis=1)
-    conv5 = Convolution2D(32, 3, 3, activation='relu', border_mode='same')(up2)
+    #up2 = merge([UpSampling2D(size=(2, 2))(conv4), conv1], mode='concat', concat_axis=1)
+    conv5 = Convolution2D(32, 3, 3, activation='relu', border_mode='same')(conv4)
     conv5 = Dropout(0.2)(conv5)
     conv5 = Convolution2D(32, 3, 3, activation='relu', border_mode='same')(conv5)
     #
     conv6 = Convolution2D(2, 1, 1, activation='relu', border_mode='same')(conv5)
-    conv6 = core.Reshape((2, patch_height * patch_width))(conv6)
-    conv6 = core.Permute((2, 1))(conv6)
+    #conv6 = core.Reshape((2, patch_height * patch_width))(conv6)
+    #conv6 = core.Permute((2, 1))(conv6)
     ############
-    conv7 = core.Activation('softmax')(conv6)
+    conv6 = core.Flatten()(conv5)
+    conv7 = core.Dense(2)(conv6)
+    conv7 = core.Activation('softmax')(conv7)
 
     model = Model(input=inputs, output=conv7)
 
     # sgd = SGD(lr=0.01, decay=1e-6, momentum=0.3, nesterov=False)
-    model.compile(optimizer='sgd', loss='categorical_crossentropy', metrics=['accuracy'])
+    model.compile(optimizer='sgd', loss='binary_crossentropy', metrics=['accuracy'])
 
     return model
 
@@ -100,9 +102,9 @@ for i in range(1):
         del temp_img3
         del temp_gt3
 
-        print X_train.shape, y_train.shape
+        print "Before y_train", X_train.shape, y_train.shape
         y_train = masks_Unet(y_train)
-        print y_train.shape
+        print "After y_train", y_train.shape
 
         # Shuffle data
         permutation = np.random.permutation(X_train.shape[0])
