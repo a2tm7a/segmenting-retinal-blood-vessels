@@ -87,8 +87,10 @@ def generate_datasets(imgs_dir, groundTruth_dir, borderMasks_dir, train_test="nu
                                                                     config.get('data attributes', 'patch_height')),
                                                                 patch_width=int(
                                                                     config.get('data attributes', 'patch_width')),
-                                                                N_subimgs=int(
-                                                                    config.get('training settings', 'N_subimgs')),
+                                                                N_pos_subimgs=int(
+                                                                    config.get('training settings', 'N_pos_subimgs')),
+                                                                N_neg_subimgs=int(
+                                                                    config.get('training settings', 'N_neg_subimgs')),
                                                                 inside_FOV=config.getboolean('training settings',
                                                                                              'inside_FOV'))
 

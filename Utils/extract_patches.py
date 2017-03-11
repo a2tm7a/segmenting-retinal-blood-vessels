@@ -3,7 +3,6 @@ import random
 
 import numpy as np
 
-
 # Load config params
 config = ConfigParser.RawConfigParser()
 config.read('configuration.txt')
@@ -14,7 +13,8 @@ def get_img_training(img,
                      groundTruth,
                      patch_height,
                      patch_width,
-                     N_subimgs,
+                     N_pos_subimgs,
+                     N_neg_subimgs,
                      inside_FOV):
     # train_imgs_original = load_hdf5(DRIVE_train_imgs_original)
     # train_masks = load_hdf5(DRIVE_train_groudTruth)  # masks always the same
@@ -41,7 +41,7 @@ def get_img_training(img,
 
     # extract the TRAINING patches from the full images
     patches_img, patches_groundTruth = extract_random(img, groundTruth, patch_height, patch_width,
-                                                      N_subimgs, inside_FOV)
+                                                      N_pos_subimgs, N_neg_subimgs, inside_FOV)
     data_consistency_check_patches(patches_img, patches_groundTruth)
 
     print "\ntrain PATCHES images/masks shape:"
@@ -54,14 +54,15 @@ def get_img_training(img,
 
 # extract patches randomly in the full image
 #  -- Inside OR in full image
-def extract_random(full_img, full_groundTruth, patch_h, patch_w, N_patches, inside=True):
+def extract_random(full_img, full_groundTruth, patch_h, patch_w, N_pos_patches, N_neg_patches, inside=True):
     assert (len(full_img.shape) == 3 and len(full_groundTruth.shape) == 3)  # 3D arrays
     assert (full_img.shape[0] == 1 or full_img.shape[0] == 3)  # check the channel is 1 or 3
     assert (full_groundTruth.shape[0] == 1)  # masks only black and white
     assert (full_img.shape[1] == full_groundTruth.shape[1] and full_img.shape[2] == full_groundTruth.shape[2])
 
-    patches = np.empty((N_patches, full_img.shape[0], patch_h, patch_w))
-    patches_groundTruth = np.empty((N_patches,))
+    # Total images would be N_pos_patches+N_neg_patches
+    patches = np.empty(((N_pos_patches + N_neg_patches), full_img.shape[0], patch_h, patch_w))
+    patches_groundTruth = np.empty(((N_pos_patches + N_neg_patches),))
 
     img_h = full_img.shape[1]  # height of the full image
     img_w = full_img.shape[2]  # width of the full image
@@ -70,11 +71,18 @@ def extract_random(full_img, full_groundTruth, patch_h, patch_w, N_patches, insi
 
     iter_tot = 0  # iter over the total number of patches (N_patches)
     k = 0
-    while k < N_patches:
+    count_pos_img = 0
+    count_neg_img = 0
+    while k < (N_pos_patches + N_neg_patches):
         # img_w - 1 to make sure if (565 - 1 - 13) is center element then 564 is 13th element
         x_center = random.randint(0 + int(patch_w / 2), (img_w - 1) - int(patch_w / 2))
 
         y_center = random.randint(0 + int(patch_h / 2), (img_h - 1) - int(patch_h / 2))
+
+        if count_neg_img >= N_neg_patches and full_groundTruth[0, y_center, x_center] == 0:
+            continue
+        elif count_pos_img >= N_pos_patches and full_groundTruth[0, y_center, x_center] == 1:
+            continue
 
         # check whether the patch is fully contained in the FOV
         if inside:
@@ -86,10 +94,18 @@ def extract_random(full_img, full_groundTruth, patch_h, patch_w, N_patches, insi
                 x_center - int(patch_w / 2):x_center + int(patch_w / 2) + 1]
 
         patch_groundTruth = full_groundTruth[0, y_center, x_center]
+
+        if patch_groundTruth == 1:
+            count_pos_img += 1
+        elif patch_groundTruth == 0:
+            count_neg_img += 1
+
         patches[iter_tot] = patch
         patches_groundTruth[iter_tot] = patch_groundTruth
         iter_tot += 1  # total
         k += 1  # per full_img
+
+    print count_neg_img, count_pos_img
     return patches, patches_groundTruth
 
 
