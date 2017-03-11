@@ -120,11 +120,11 @@ for epoch in range(1):
 
     model.fit(X_train, y_train, nb_epoch=1, validation_split=.1, verbose=1)
 
-    del X_train
-    del y_train
-
     y_pred = model.predict(X_train)
     print_confusion_matrix(y_pred, y_train)
+
+    del X_train
+    del y_train
 
 model.save_weights('.' + str(config.get('data paths', 'saved_weights')) + "model.h5", overwrite=True)
 
