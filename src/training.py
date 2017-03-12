@@ -2,25 +2,22 @@ import ConfigParser
 
 import h5py
 from keras.models import Model
-from keras.layers import Input, merge, Convolution2D, MaxPooling2D, UpSampling2D, Reshape, core, Dropout
+from keras.layers import Input, Convolution2D, MaxPooling2D, core, Dropout
+from keras.preprocessing.image import ImageDataGenerator
 import numpy as np
 import sys
 
 from keras.optimizers import SGD
-from keras.utils import np_utils
 
 np.random.seed(1337)
 
 sys.path.append('../../segmenting-retinal-blood-vessels/')
-from Utils.help_functions import load_hdf5
+from Utils.help_functions import load_train_data, load_val_data
 from Utils.help_functions import print_confusion_matrix
 
 # Load config params
 config = ConfigParser.RawConfigParser()
 config.read('../configuration.txt')
-
-dataset_path = str(config.get('data paths', 'path_local'))
-nb_classes = 2
 
 
 # Define the neural network
@@ -68,74 +65,22 @@ model = get_unet(n_ch=int(config.get('data attributes', 'channels')),
                  patch_height=int(config.get('data attributes', 'patch_height')))
 model.summary()
 
-
-def load_train_data():
-    # Images from 21 to 38 are taken for training
-    input_sequence = np.arange(21, 39)
-    np.random.shuffle(input_sequence)
-
-    j = 0
-    X_train = None
-    y_train = None
-    # Testing purpose
-    while j < len(input_sequence):
-        print str(j) + " ", " data"
-
-        temp_path1 = "." + dataset_path + "training_patches_" + str(input_sequence[j])
-        temp_img1, temp_gt1 = load_hdf5(temp_path1)
-        j += 1
-        if X_train is None:
-            X_train = temp_img1
-            y_train = temp_gt1
-        else:
-            X_train = np.append(X_train, temp_img1, axis=0)
-            y_train = np.append(y_train, temp_gt1, axis=0)
-
-        del temp_img1
-        del temp_gt1
-
-    # TODO: Temp
-    print y_train.dtype
-    positive_examples = 0
-    negative_examples = 0
-    for i in range(y_train.shape[0]):
-        if y_train[i] == 1:
-            positive_examples += 1
-        elif y_train[i] == 0:
-            negative_examples += 1
-        else:
-            print "Something else"
-
-    print positive_examples, negative_examples
-
-    print "Before y_train", X_train.shape, y_train.shape
-    y_train = np_utils.to_categorical(y_train, nb_classes)
-    print "After y_train", y_train.shape
-
-    # Shuffle data
-    permutation = np.random.permutation(X_train.shape[0])
-    print permutation
-    X_train = X_train[permutation]
-    y_train = y_train[permutation]
-    return X_train, y_train
-
-
-def load_val_data():
-    # Testing on the left 2 images
-    temp_path1 = "." + dataset_path + "training_patches_39"
-    temp_path2 = "." + dataset_path + "training_patches_40"
-
-    temp_img1, temp_gt1 = load_hdf5(temp_path1)
-    temp_img2, temp_gt2 = load_hdf5(temp_path2)
-
-    X_test = np.append(temp_img1, temp_img2, axis=0)
-    y_test = np.append(temp_gt1, temp_gt2, axis=0)
-    y_test = np_utils.to_categorical(y_test, nb_classes)
-    return X_test, y_test
-
-
 X_train, y_train = load_train_data()
 X_val, y_val = load_val_data()
+
+datagen_train = ImageDataGenerator(
+    featurewise_center=False,  # set input mean to 0 over the dataset
+    samplewise_center=False,  # set each sample mean to 0
+    featurewise_std_normalization=False,  # divide inputs by std of the dataset
+    samplewise_std_normalization=False,  # divide each input by its std
+    zca_whitening=False,  # apply ZCA whitening
+    rotation_range=0,  # randomly rotate images in the range (degrees, 0 to 180)
+    width_shift_range=0.1,  # randomly shift images horizontally (fraction of total width)
+    height_shift_range=0.1,  # randomly shift images vertically (fraction of total height)
+    horizontal_flip=True,  # randomly flip images
+    vertical_flip=False)  # randomly flip images
+
+datagen_train.fit(X_train)
 
 run_flag = True
 weights = []
@@ -159,24 +104,25 @@ while run_flag:
         model.set_weights(np.asarray(weights))
 
     sgd = SGD(lr=lr)
-    
-    print lr, " learning rate"
-    print iter_count," iteration"
-    model.compile(optimizer='sgd', loss='binary_crossentropy', metrics=['accuracy'])
-    model.fit(X_train, y_train, nb_epoch=1, verbose=1, validation_data=(X_val, y_val))
 
-    y_pred = model.predict(X_train)
+    print lr, " learning rate"
+    print iter_count, " iteration"
+    model.compile(optimizer='sgd', loss='binary_crossentropy', metrics=['accuracy'])
+    model.fit_generator(datagen_train.flow(X_train, y_train, batch_size=32),
+                        nb_epoch=1, verbose=1)
+
+    y_pred = model.predict_generator(datagen_train.flow(X_train, batch_size=32))
     print_confusion_matrix(y_pred, y_train)
 
-    score = model.evaluate(X_val, y_val, verbose=1)
+    score = model.evaluate_generator(datagen_train.flow(X_train,y_train, batch_size=X_train.shape[0]), verbose=1)
     print score[1], score[0]
     val_accuracy = score[1]
 
-    y_pred = model.predict(X_val)
+    y_pred = model.predict_generator(datagen_train.flow(X_val, batch_size=32))
     print_confusion_matrix(y_pred, y_val)
 
-    print val_accuracy," - val accuracy"
-    print final_acc, " - final_accuracy" 
+    print val_accuracy, " - val accuracy"
+    print final_acc, " - final_accuracy"
     if val_accuracy - final_acc > 0.0005:
         iter_count += 1
         # Update the weights if the accuracy is greater than .001
