@@ -1,6 +1,5 @@
 import ConfigParser
 
-import h5py
 from keras.models import Model
 from keras.layers import Input, Convolution2D, MaxPooling2D, core, Dropout
 from keras.preprocessing.image import ImageDataGenerator
@@ -13,7 +12,7 @@ np.random.seed(1573)
 
 sys.path.append('../../segmenting-retinal-blood-vessels/')
 from Utils.help_functions import load_train_data, load_val_data
-from Utils.help_functions import print_confusion_matrix
+from Utils.help_functions import class_accuracy
 
 # Load config params
 config = ConfigParser.RawConfigParser()
@@ -112,14 +111,17 @@ while run_flag:
                         samples_per_epoch=X_train.shape[0])
 
     y_pred = model.predict_generator(datagen_train.flow(X_train, batch_size=32), val_samples=X_train.shape[0])
-    print_confusion_matrix(y_pred, y_train)
+    fa, fr, ta, tr = class_accuracy(y_pred[:, 1], y_train[:, 1])
+    print "FA FR TA TR", fa, fr, ta, tr
 
     score = model.evaluate_generator(datagen_train.flow(X_val, y_val, batch_size=32), val_samples=X_val.shape[0])
     print score[1], score[0]
     val_accuracy = score[1]
 
     y_pred = model.predict_generator(datagen_train.flow(X_val, batch_size=32), val_samples=X_val.shape[0])
-    print_confusion_matrix(y_pred, y_val)
+
+    fa, fr, ta, tr = class_accuracy(y_pred[:, 1], y_val[:, 1])
+    print "FA FR TA TR", fa, fr, ta, tr
 
     print val_accuracy, " - val accuracy"
     print final_acc, " - final_accuracy"

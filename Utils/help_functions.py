@@ -4,7 +4,6 @@ import ConfigParser
 import h5py
 import numpy as np
 from keras.utils import np_utils
-from sklearn.metrics import classification_report, confusion_matrix
 
 
 def load_hdf5(infile):
@@ -12,12 +11,36 @@ def load_hdf5(infile):
         return f["img"][()], f["groundTruth"][()]
 
 
-# y_pred and y_true are numpy arrays
-def print_confusion_matrix(y_pred, y_true):
-    y_pred = np.argmax(y_pred, axis=1)
-    target_names = ['Class 0', 'Class 1']
-    print classification_report(np.argmax(y_true, axis=1), y_pred, target_names=target_names)
-    print (confusion_matrix(np.argmax(y_true, axis=1), y_pred))
+def class_accuracy(y_predicted, y_value, threshold=0.5):
+    # Calculates and returns the False Alarm Rate, False Reject Rate, True Alarm Rate, True Reject Rate.
+
+    # Hypothesis
+    false_reject = 0
+    false_alarm = 0
+    true_alarm = 0
+    true_reject = 0
+
+    # Total positive examples would be the sum of y_val because it would contain a 1 for every possible +ve example
+    # and 0 for -ve example
+    total_positive_examples = sum(y_value)
+    total_negative_examples = len(y_value) - total_positive_examples
+
+    for i in range(0, len(y_predicted)):
+        # Checking for the hypothesis
+        if y_predicted[i] >= threshold and y_value[i] == 0:
+            false_alarm += 1
+        elif y_predicted[i] < threshold and y_value[i] == 1:
+            false_reject += 1
+        elif y_predicted[i] >= threshold and y_value[i] == 1:
+            true_alarm += 1
+        elif y_predicted[i] < threshold and y_value[i] == 0:
+            true_reject += 1
+
+    print true_reject, false_alarm
+    print false_reject, false_alarm
+
+    return (false_alarm / float(total_negative_examples), false_reject / float(total_positive_examples),
+            true_alarm / float(total_positive_examples), true_reject / float(total_negative_examples))
 
 
 nb_classes = 2
