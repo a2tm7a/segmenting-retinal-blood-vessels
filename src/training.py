@@ -5,6 +5,8 @@ from keras.models import Model
 from keras.layers import Input, merge, Convolution2D, MaxPooling2D, UpSampling2D, Reshape, core, Dropout
 import numpy as np
 import sys
+
+from keras.optimizers import SGD
 from keras.utils import np_utils
 
 np.random.seed(1234)
@@ -58,9 +60,6 @@ def get_unet(n_ch, patch_height, patch_width):
 
     model = Model(input=inputs, output=conv7)
 
-    # sgd = SGD(lr=0.01, decay=1e-6, momentum=0.3, nesterov=False)
-    model.compile(optimizer='sgd', loss='binary_crossentropy', metrics=['accuracy'])
-
     return model
 
 
@@ -69,7 +68,8 @@ model = get_unet(n_ch=int(config.get('data attributes', 'channels')),
                  patch_height=int(config.get('data attributes', 'patch_height')))
 model.summary()
 
-for epoch in range(10):
+
+def load_train_data():
     # Images from 21 to 38 are taken for training
     input_sequence = np.arange(21, 39)
     np.random.shuffle(input_sequence)
@@ -117,36 +117,88 @@ for epoch in range(10):
     permutation = np.random.permutation(X_train.shape[0])
     X_train = X_train[permutation]
     y_train = y_train[permutation]
+    return X_train, y_train
 
-    model.fit(X_train, y_train, nb_epoch=1, validation_split=.1, verbose=1)
+
+def load_val_data():
+    # Testing on the left 2 images
+    temp_path1 = "." + dataset_path + "training_patches_39"
+    temp_path2 = "." + dataset_path + "training_patches_40"
+
+    temp_img1, temp_gt1 = load_hdf5(temp_path1)
+    temp_img2, temp_gt2 = load_hdf5(temp_path2)
+
+    X_test = np.append(temp_img1, temp_img2, axis=0)
+    y_test = np.append(temp_gt1, temp_gt2, axis=0)
+    y_test = np_utils.to_categorical(y_test, nb_classes)
+    return X_test, y_test
+
+
+X_train, y_train = load_train_data()
+X_val, y_val = load_val_data()
+
+run_flag = True
+weights = []
+# Check if it is the first iteration
+first_iter = True
+
+# Setting the final accuracy to 0 just for the start
+final_acc = 0.0
+count_neg_iter = 0
+iter_count = 1
+nb_neg_cycles = 3
+
+# TODO: find optimal learning rate
+lr = 0.1
+
+while run_flag:
+
+    if first_iter:
+        first_iter = False
+    else:
+        model.set_weights(np.asarray(weights))
+
+    sgd = SGD(lr=lr)
+    model.compile(optimizer='sgd', loss='binary_crossentropy', metrics=['accuracy'])
+    model.fit(X_train, y_train, nb_epoch=1, verbose=1, validation_data=(X_val, y_val))
 
     y_pred = model.predict(X_train)
     print_confusion_matrix(y_pred, y_train)
 
-    del X_train
-    del y_train
+    score = model.evaluate(X_val, y_val, verbose=1)
+    print score[1], score[0]
+    val_accuracy = score[1]
+
+    y_pred = model.predict(X_val)
+    print_confusion_matrix(y_pred, y_val)
+
+    if val_accuracy - final_acc > 0.05:
+        iter_count += 1
+        # Update the weights if the accuracy is greater than .001
+        weights = model.get_weights()
+        print ("Updating the weights")
+        # Updating the final accuracy
+        final_acc = val_accuracy
+        # Setting the count to 0 again so that the loop doesn't stop before reducing the learning rate n times
+        # consecutively
+        count_neg_iter = 0
+    else:
+        # If the difference is not greater than 0.005 reduce the learning rate
+        lr /= 2.0
+        print ("Reducing the learning rate by half")
+        count_neg_iter += 1
+
+        # If the learning rate is reduced consecutively for nb_neg_cycles times then the loop should stop
+        if count_neg_iter > nb_neg_cycles:
+            run_flag = False
+            model.set_weights(np.asarray(weights))
+
+            # Saving the model and weights in a separate file
+
+del X_train
+del y_train
+
+del X_val
+del y_val
 
 model.save_weights('.' + str(config.get('data paths', 'saved_weights')) + "model.h5", overwrite=True)
-
-# Testing on the left 2 images
-temp_path1 = "." + dataset_path + "training_patches_39"
-temp_path2 = "." + dataset_path + "training_patches_40"
-
-temp_img1, temp_gt1 = load_hdf5(temp_path1)
-temp_img2, temp_gt2 = load_hdf5(temp_path2)
-
-X_test = np.append(temp_img1, temp_img2, axis=0)
-y_test = np.append(temp_gt1, temp_gt2, axis=0)
-y_test = np_utils.to_categorical(y_test, nb_classes)
-
-del temp_img1
-del temp_gt1
-del temp_img2
-del temp_gt2
-
-print "Validation Data"
-score = model.evaluate(X_test, y_test, verbose=1)
-print score[1], score[0]
-
-y_pred = model.predict(X_test)
-print_confusion_matrix(y_pred, y_test)
