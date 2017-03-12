@@ -111,14 +111,14 @@ while run_flag:
     model.fit_generator(datagen_train.flow(X_train, y_train, batch_size=32), nb_epoch=1, verbose=1,
                         samples_per_epoch=X_train.shape[0])
 
-    y_pred = model.predict_generator(datagen_train.flow(X_train, batch_size=32))
+    y_pred = model.predict_generator(datagen_train.flow(X_train, batch_size=32), val_samples = X_train.shape[0])
     print_confusion_matrix(y_pred, y_train)
 
-    score = model.evaluate_generator(datagen_train.flow(X_train, y_train, batch_size=X_train.shape[0]))
+    score = model.evaluate_generator(datagen_train.flow(X_train, y_train, batch_size=32), val_samples = X_train.shape[0])
     print score[1], score[0]
     val_accuracy = score[1]
 
-    y_pred = model.predict_generator(datagen_train.flow(X_val, batch_size=32))
+    y_pred = model.predict_generator(datagen_train.flow(X_val, batch_size=32), val_samples = X_val.shape[0])
     print_confusion_matrix(y_pred, y_val)
 
     print val_accuracy, " - val accuracy"
