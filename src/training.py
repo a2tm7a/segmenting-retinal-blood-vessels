@@ -159,6 +159,7 @@ while run_flag:
         model.set_weights(np.asarray(weights))
 
     sgd = SGD(lr=lr)
+    print lr, " learning rate"
     model.compile(optimizer='sgd', loss='binary_crossentropy', metrics=['accuracy'])
     model.fit(X_train, y_train, nb_epoch=1, verbose=1, validation_data=(X_val, y_val))
 
@@ -192,8 +193,6 @@ while run_flag:
         if count_neg_iter > nb_neg_cycles:
             run_flag = False
             model.set_weights(np.asarray(weights))
-
-            # Saving the model and weights in a separate file
 
 del X_train
 del y_train

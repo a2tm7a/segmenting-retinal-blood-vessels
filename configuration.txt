@@ -9,7 +9,7 @@ channels = 3
 N_pos_subimgs = 5000
 N_neg_subimgs = 5000
 #if patches are extracted only inside the field of view:
-inside_FOV = False
+inside_FOV = True
 
 [data paths]
 path_local =  ./DRIVE_datasets_training_testing/
