@@ -5,6 +5,8 @@ from keras.models import Model
 from keras.layers import Input, merge, Convolution2D, MaxPooling2D, UpSampling2D, Reshape, core, Dropout
 import numpy as np
 import sys
+
+from keras.optimizers import SGD
 from keras.utils import np_utils
 
 np.random.seed(1234)
@@ -57,9 +59,6 @@ def get_unet(n_ch, patch_height, patch_width):
     conv7 = core.Activation('softmax')(conv7)
 
     model = Model(input=inputs, output=conv7)
-
-    # sgd = SGD(lr=0.01, decay=1e-6, momentum=0.3, nesterov=False)
-    model.compile(optimizer='sgd', loss='binary_crossentropy', metrics=['accuracy'])
 
     return model
 
@@ -138,17 +137,63 @@ def load_val_data():
 X_train, y_train = load_train_data()
 X_val, y_val = load_val_data()
 
-for epoch in range(1):
-    model.fit(X_train, y_train, nb_epoch=1, verbose=1)
+run_flag = True
+weights = []
+# Check if it is the first iteration
+first_iter = True
+
+# Setting the final accuracy to 0 just for the start
+final_acc = 0.0
+count_neg_iter = 0
+iter_count = 1
+nb_neg_cycles = 3
+
+# TODO: find optimal learning rate
+lr = 0.1
+
+while run_flag:
+
+    if first_iter:
+        first_iter = False
+    else:
+        model.set_weights(np.asarray(weights))
+
+    sgd = SGD(lr=lr)
+    model.compile(optimizer='sgd', loss='binary_crossentropy', metrics=['accuracy'])
+    model.fit(X_train, y_train, nb_epoch=1, verbose=1, validation_data=(X_val, y_val))
 
     y_pred = model.predict(X_train)
     print_confusion_matrix(y_pred, y_train)
 
     score = model.evaluate(X_val, y_val, verbose=1)
     print score[1], score[0]
+    val_accuracy = score[1]
 
     y_pred = model.predict(X_val)
     print_confusion_matrix(y_pred, y_val)
+
+    if val_accuracy - final_acc > 0.05:
+        iter_count += 1
+        # Update the weights if the accuracy is greater than .001
+        weights = model.get_weights()
+        print ("Updating the weights")
+        # Updating the final accuracy
+        final_acc = val_accuracy
+        # Setting the count to 0 again so that the loop doesn't stop before reducing the learning rate n times
+        # consecutively
+        count_neg_iter = 0
+    else:
+        # If the difference is not greater than 0.005 reduce the learning rate
+        lr /= 2.0
+        print ("Reducing the learning rate by half")
+        count_neg_iter += 1
+
+        # If the learning rate is reduced consecutively for nb_neg_cycles times then the loop should stop
+        if count_neg_iter > nb_neg_cycles:
+            run_flag = False
+            model.set_weights(np.asarray(weights))
+
+            # Saving the model and weights in a separate file
 
 del X_train
 del y_train
