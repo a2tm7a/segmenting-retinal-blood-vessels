@@ -69,7 +69,7 @@ model = get_unet(n_ch=int(config.get('data attributes', 'channels')),
                  patch_height=int(config.get('data attributes', 'patch_height')))
 model.summary()
 
-for epoch in range(1):
+for epoch in range(10):
     # Images from 21 to 38 are taken for training
     input_sequence = np.arange(21, 39)
     np.random.shuffle(input_sequence)
