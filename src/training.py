@@ -9,7 +9,7 @@ import sys
 from keras.optimizers import SGD
 from keras.utils import np_utils
 
-np.random.seed(1337)
+np.random.seed(1573)
 
 sys.path.append('../../segmenting-retinal-blood-vessels/')
 from Utils.help_functions import load_hdf5
