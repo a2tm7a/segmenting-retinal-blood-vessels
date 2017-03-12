@@ -9,7 +9,7 @@ import sys
 from keras.optimizers import SGD
 from keras.utils import np_utils
 
-np.random.seed(1234)
+np.random.seed(1337)
 
 sys.path.append('../../segmenting-retinal-blood-vessels/')
 from Utils.help_functions import load_hdf5
@@ -73,7 +73,6 @@ def load_train_data():
     # Images from 21 to 38 are taken for training
     input_sequence = np.arange(21, 39)
     np.random.shuffle(input_sequence)
-    print '\n' + str(input_sequence), str(epoch) + "th iteration"
 
     j = 0
     X_train = None
@@ -115,6 +114,7 @@ def load_train_data():
 
     # Shuffle data
     permutation = np.random.permutation(X_train.shape[0])
+    print permutation
     X_train = X_train[permutation]
     y_train = y_train[permutation]
     return X_train, y_train
@@ -159,6 +159,7 @@ while run_flag:
         model.set_weights(np.asarray(weights))
 
     sgd = SGD(lr=lr)
+    print iter_count," iteration"
     model.compile(optimizer='sgd', loss='binary_crossentropy', metrics=['accuracy'])
     model.fit(X_train, y_train, nb_epoch=1, verbose=1, validation_data=(X_val, y_val))
 
@@ -172,7 +173,9 @@ while run_flag:
     y_pred = model.predict(X_val)
     print_confusion_matrix(y_pred, y_val)
 
-    if val_accuracy - final_acc > 0.05:
+    print val_accuracy," - val accuracy"
+    print final_acc, " - final_accuracy" 
+    if val_accuracy - final_acc > 0.0005:
         iter_count += 1
         # Update the weights if the accuracy is greater than .001
         weights = model.get_weights()
