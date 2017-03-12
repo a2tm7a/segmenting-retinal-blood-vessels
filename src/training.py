@@ -121,7 +121,7 @@ def load_train_data():
     return X_train, y_train
 
 
-def load_test_data():
+def load_val_data():
     # Testing on the left 2 images
     temp_path1 = "." + dataset_path + "training_patches_39"
     temp_path2 = "." + dataset_path + "training_patches_40"
@@ -136,22 +136,24 @@ def load_test_data():
 
 
 X_train, y_train = load_train_data()
+X_val, y_val = load_val_data()
 
 for epoch in range(1):
-    model.fit(X_train, y_train, nb_epoch=1, validation_split=.1, verbose=1)
+    model.fit(X_train, y_train, nb_epoch=1, verbose=1)
 
     y_pred = model.predict(X_train)
     print_confusion_matrix(y_pred, y_train)
 
+    score = model.evaluate(X_val, y_val, verbose=1)
+    print score[1], score[0]
+
+    y_pred = model.predict(X_val)
+    print_confusion_matrix(y_pred, y_val)
+
 del X_train
 del y_train
 
+del X_val
+del y_val
+
 model.save_weights('.' + str(config.get('data paths', 'saved_weights')) + "model.h5", overwrite=True)
-
-X_test, y_test = load_test_data()
-print "Validation Data"
-score = model.evaluate(X_test, y_test, verbose=1)
-print score[1], score[0]
-
-y_pred = model.predict(X_test)
-print_confusion_matrix(y_pred, y_test)
