@@ -69,7 +69,8 @@ model = get_unet(n_ch=int(config.get('data attributes', 'channels')),
                  patch_height=int(config.get('data attributes', 'patch_height')))
 model.summary()
 
-for epoch in range(1):
+
+def load_train_data():
     # Images from 21 to 38 are taken for training
     input_sequence = np.arange(21, 39)
     np.random.shuffle(input_sequence)
@@ -117,33 +118,37 @@ for epoch in range(1):
     permutation = np.random.permutation(X_train.shape[0])
     X_train = X_train[permutation]
     y_train = y_train[permutation]
+    return X_train, y_train
 
+
+def load_test_data():
+    # Testing on the left 2 images
+    temp_path1 = "." + dataset_path + "training_patches_39"
+    temp_path2 = "." + dataset_path + "training_patches_40"
+
+    temp_img1, temp_gt1 = load_hdf5(temp_path1)
+    temp_img2, temp_gt2 = load_hdf5(temp_path2)
+
+    X_test = np.append(temp_img1, temp_img2, axis=0)
+    y_test = np.append(temp_gt1, temp_gt2, axis=0)
+    y_test = np_utils.to_categorical(y_test, nb_classes)
+    return X_test, y_test
+
+
+X_train, y_train = load_train_data()
+
+for epoch in range(1):
     model.fit(X_train, y_train, nb_epoch=1, validation_split=.1, verbose=1)
 
     y_pred = model.predict(X_train)
     print_confusion_matrix(y_pred, y_train)
 
-    del X_train
-    del y_train
+del X_train
+del y_train
 
 model.save_weights('.' + str(config.get('data paths', 'saved_weights')) + "model.h5", overwrite=True)
 
-# Testing on the left 2 images
-temp_path1 = "." + dataset_path + "training_patches_39"
-temp_path2 = "." + dataset_path + "training_patches_40"
-
-temp_img1, temp_gt1 = load_hdf5(temp_path1)
-temp_img2, temp_gt2 = load_hdf5(temp_path2)
-
-X_test = np.append(temp_img1, temp_img2, axis=0)
-y_test = np.append(temp_gt1, temp_gt2, axis=0)
-y_test = np_utils.to_categorical(y_test, nb_classes)
-
-del temp_img1
-del temp_gt1
-del temp_img2
-del temp_gt2
-
+X_test, y_test = load_test_data()
 print "Validation Data"
 score = model.evaluate(X_test, y_test, verbose=1)
 print score[1], score[0]
