@@ -102,7 +102,7 @@ while run_flag:
 
     print lr, " learning rate"
     print iter_count, " iteration"
-    model.compile(optimizer='sgd', loss='binary_crossentropy', metrics=['accuracy'])
+    model.compile(optimizer=sgd, loss='binary_crossentropy', metrics=['accuracy'])
     model.fit_generator(datagen_train.flow(X_train, y_train, batch_size=32), nb_epoch=1, verbose=1,
                         samples_per_epoch=X_train.shape[0])
 

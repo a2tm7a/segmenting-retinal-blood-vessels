@@ -1,10 +1,10 @@
 import ConfigParser
-from PIL import Image
 
 import h5py
 import numpy as np
 import os
 from Utils.extract_patches import get_img_training
+from scipy import misc
 
 
 def write_hdf5(img, outfile, groundTruth):
@@ -36,28 +36,31 @@ config.read('configuration.txt')
 dataset_path = config.get('data paths', 'path_local')
 
 
-def swapaxes_img(img):
+def swap_axes(img):
     temp = np.swapaxes(img, 0, 2)
     temp = np.swapaxes(temp, 1, 2)
     return temp
 
 
-def generate_datasets(imgs_dir, groundTruth_dir, borderMasks_dir, train_test="null"):
+def generate_dataset(imgs_dir, groundTruth_dir, borderMasks_dir, train_test="null"):
     for path, subdirs, files in os.walk(imgs_dir):  # list all files, directories in the path
         for i in range(len(files)):
 
             # original image
             print "original image: " + files[i]
-            temp_img = Image.open(imgs_dir + files[i])
+            temp_img = misc.imread(imgs_dir + files[i])
+            print temp_img.shape, type(temp_img)
             # To reshape the image as (channels x height x width)
-            temp_img = swapaxes_img(temp_img)
-            img = np.asarray(temp_img)
+            temp_img = swap_axes(temp_img)
+            img = temp_img
             print img.shape
 
             # corresponding ground truth
             groundTruth_name = files[i][0:2] + "_manual1.gif"
             print "ground truth name: " + groundTruth_name
-            temp_groundTruth = Image.open(groundTruth_dir + groundTruth_name)
+
+            temp_groundTruth = misc.imread(groundTruth_dir + groundTruth_name)
+            print np.asarray(temp_groundTruth).shape
             # To reshape the ground truth as (channels x height x width)
             temp_groundTruth = np.reshape(temp_groundTruth, (
                 1, np.asarray(temp_groundTruth).shape[0], np.asarray(temp_groundTruth).shape[1]))
@@ -74,14 +77,13 @@ def generate_datasets(imgs_dir, groundTruth_dir, borderMasks_dir, train_test="nu
                 print "specify if train or test!!"
                 exit()
             print "border masks name: " + border_masks_name
-            temp_border_mask = Image.open(borderMasks_dir + border_masks_name)
+            temp_border_mask = misc.imread(borderMasks_dir + border_masks_name)
             temp_border_mask = np.reshape(temp_border_mask, (
                 1, np.asarray(temp_border_mask).shape[0], np.asarray(temp_border_mask).shape[1]))
             border_mask = temp_border_mask
             print border_mask.shape
 
             # TODO: Preprocessing  of image
-
             patches_img, patches_groundTruth = get_img_training(img=img, groundTruth=groundTruth,
                                                                 patch_height=int(
                                                                     config.get('data attributes', 'patch_height')),
@@ -102,5 +104,5 @@ def generate_datasets(imgs_dir, groundTruth_dir, borderMasks_dir, train_test="nu
 if not os.path.exists(dataset_path):
     os.makedirs(dataset_path)
 
-generate_datasets(original_imgs_train, groundTruth_imgs_train,
-                  borderMasks_imgs_train, "train")
+generate_dataset(original_imgs_train, groundTruth_imgs_train,
+                 borderMasks_imgs_train, "train")
