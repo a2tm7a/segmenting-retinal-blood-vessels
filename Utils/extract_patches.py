@@ -16,15 +16,8 @@ def get_img_training(img,
                      N_pos_subimgs,
                      N_neg_subimgs,
                      inside_FOV):
-    # train_imgs_original = load_hdf5(DRIVE_train_imgs_original)
-    # train_masks = load_hdf5(DRIVE_train_groudTruth)  # masks always the same
-    # # visualize(group_images(train_imgs_original[0:20,:,:,:],5),'imgs_train')#.show()  #check original imgs train
-
-
-    # train_imgs = my_PreProc(train_imgs_original)
-
     # Converting white pixels to 1 and black to 0
-    groundTruth = groundTruth / 255.
+    groundTruth /= 255.
 
     img = img[:, 9:574, :]  # cut bottom and top so now it is 565*565
     groundTruth = groundTruth[:, 9:574, :]  # cut bottom and top so now it is 565*565
@@ -37,11 +30,14 @@ def get_img_training(img,
     print "\nimage/mask shape:"
     print img.shape
     print "image range (min-max): " + str(np.min(img)) + ' - ' + str(np.max(img))
-    print "Ground Truth are within 0-1\n"
+    print "Ground Truth are within " + str(np.min(groundTruth)) + "-" + str(np.max(groundTruth)) + "\n"
 
     # extract the TRAINING patches from the full images
-    patches_img, patches_groundTruth = extract_random(img, groundTruth, patch_height, patch_width,
-                                                      N_pos_subimgs, N_neg_subimgs, inside_FOV)
+    patches_img, patches_groundTruth = extract_random(full_img=img, full_groundTruth=groundTruth, patch_h=patch_height,
+                                                      patch_w=patch_width,
+                                                      N_pos_patches=N_pos_subimgs, N_neg_patches=N_neg_subimgs,
+                                                      inside=inside_FOV)
+
     data_consistency_check_patches(patches_img, patches_groundTruth)
 
     print "\ntrain PATCHES images/masks shape:"
@@ -56,7 +52,7 @@ def get_img_training(img,
 #  -- Inside OR in full image
 def extract_random(full_img, full_groundTruth, patch_h, patch_w, N_pos_patches, N_neg_patches, inside=True):
     assert (len(full_img.shape) == 3 and len(full_groundTruth.shape) == 3)  # 3D arrays
-    assert (full_img.shape[0] == 1 or full_img.shape[0] == 3)  # check the channel is 1 or 3
+    assert (full_img.shape[0] == 3)  # check the channel is 3
     assert (full_groundTruth.shape[0] == 1)  # masks only black and white
     assert (full_img.shape[1] == full_groundTruth.shape[1] and full_img.shape[2] == full_groundTruth.shape[2])
 
@@ -79,9 +75,9 @@ def extract_random(full_img, full_groundTruth, patch_h, patch_w, N_pos_patches, 
 
         y_center = random.randint(0 + int(patch_h / 2), (img_h - 1) - int(patch_h / 2))
 
-        if count_neg_img >= N_neg_patches and full_groundTruth[0, y_center, x_center] == 0:
+        if count_neg_img >= N_neg_patches and full_groundTruth[0, x_center, y_center] == 0:
             continue
-        elif count_pos_img >= N_pos_patches and full_groundTruth[0, y_center, x_center] == 1:
+        elif count_pos_img >= N_pos_patches and full_groundTruth[0, x_center, y_center] == 1:
             continue
 
         # check whether the patch is fully contained in the FOV
@@ -90,10 +86,10 @@ def extract_random(full_img, full_groundTruth, patch_h, patch_w, N_pos_patches, 
                 continue
 
         # y_center + int(patch_h / 2) + 1 so that total length before and after the center element is same
-        patch = full_img[:, y_center - int(patch_h / 2):y_center + int(patch_h / 2) + 1,
-                x_center - int(patch_w / 2):x_center + int(patch_w / 2) + 1]
+        patch = full_img[:, x_center - int(patch_w / 2):x_center + int(patch_w / 2) + 1,
+                y_center - int(patch_h / 2):y_center + int(patch_h / 2) + 1]
 
-        patch_groundTruth = full_groundTruth[0, y_center, x_center]
+        patch_groundTruth = full_groundTruth[0, x_center, y_center]
 
         if patch_groundTruth == 1:
             count_pos_img += 1
@@ -114,7 +110,7 @@ def data_consistency_check_img(img, groundTruth):
     assert (img.shape[1] == groundTruth.shape[1])
     assert (img.shape[2] == groundTruth.shape[2])
     assert (groundTruth.shape[0] == 1)
-    assert (img.shape[0] == 1 or img.shape[0] == 3)
+    assert (img.shape[0] == 3)
 
 
 def data_consistency_check_patches(patches, patches_groundTruth):
@@ -125,7 +121,7 @@ def data_consistency_check_patches(patches, patches_groundTruth):
     assert (patches.shape[2] == int(config.get('data attributes', 'patch_height')))
     assert (patches.shape[3] == int(config.get('data attributes', 'patch_width')))
 
-    assert (patches.shape[1] == 1 or patches.shape[1] == 3)
+    assert (patches.shape[1] == 3)
 
 
 # check if the patch is fully contained in the FOV
