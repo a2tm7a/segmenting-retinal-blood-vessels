@@ -17,7 +17,7 @@ def get_img_training(img,
                      N_neg_subimgs,
                      inside_FOV):
     # Converting white pixels to 1 and black to 0
-    groundTruth /= 255.
+    groundTruth = groundTruth / 255.
 
     img = img[:, 9:574, :]  # cut bottom and top so now it is 565*565
     groundTruth = groundTruth[:, 9:574, :]  # cut bottom and top so now it is 565*565
