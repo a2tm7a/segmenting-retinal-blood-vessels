@@ -1,7 +1,7 @@
 import ConfigParser
 
 from keras.models import Model
-from keras.layers import Input, Convolution2D, MaxPooling2D, core, Dropout, UpSampling2D, merge
+from keras.layers import Input, Convolution2D, MaxPooling2D, core, Dropout, UpSampling2D, merge, Flatten, Dense
 from keras.preprocessing.image import ImageDataGenerator
 import numpy as np
 import sys
@@ -78,18 +78,18 @@ def get_unet(n_ch, patch_height, patch_width):
     conv5 = Dropout(0.2)(conv5)
     conv5 = Convolution2D(128, 3, 3, activation='relu', border_mode='same')(conv5)
     #
-    up2 = merge([UpSampling2D(size=(2, 2))(conv5), conv4], mode='concat', concat_axis=1)
-    conv6 = Convolution2D(64, 3, 3, activation='relu', border_mode='same')(up2)
+    # up2 = merge([UpSampling2D(size=(2, 2))(conv5), conv4], mode='concat', concat_axis=1)
+    conv6 = Convolution2D(64, 3, 3, activation='relu', border_mode='same')(conv5)
     conv6 = Dropout(0.2)(conv6)
     conv6 = Convolution2D(64, 3, 3, activation='relu', border_mode='same')(conv6)
     #
-    up3 = merge([UpSampling2D(size=(2, 2))(conv6), conv3], mode='concat', concat_axis=1)
-    conv7 = Convolution2D(32, 3, 3, activation='relu', border_mode='same')(up3)
+    # up3 = merge([UpSampling2D(size=(2, 2))(conv6), conv3], mode='concat', concat_axis=1)
+    conv7 = Convolution2D(32, 3, 3, activation='relu', border_mode='same')(conv6)
     conv7 = Dropout(0.2)(conv7)
     conv7 = Convolution2D(32, 3, 3, activation='relu', border_mode='same')(conv7)
     #
-    up4 = merge([UpSampling2D(size=(2, 2))(conv7), conv2], mode='concat', concat_axis=1)
-    conv8 = Convolution2D(16, 3, 3, activation='relu', border_mode='same')(up4)
+    # up4 = merge([UpSampling2D(size=(2, 2))(conv7), conv2], mode='concat', concat_axis=1)
+    conv8 = Convolution2D(16, 3, 3, activation='relu', border_mode='same')(conv7)
     conv8 = Dropout(0.2)(conv8)
     conv8 = Convolution2D(16, 3, 3, activation='relu', border_mode='same')(conv8)
     #
@@ -99,9 +99,11 @@ def get_unet(n_ch, patch_height, patch_width):
     conv9 = Convolution2D(32, 3, 3, activation='relu', border_mode='same')(conv9)
     #
     conv10 = Convolution2D(2, 1, 1, activation='relu', border_mode='same')(conv9)
-    conv10 = core.Reshape((2, patch_height * patch_width))(conv10)
-    conv10 = core.Permute((2, 1))(conv10)
+    #conv10 = core.Reshape((2,1))(conv10)
+    #conv10 = core.Permute((2, 1))(conv10)
     ############
+    conv10 = Flatten()(conv10)
+    conv10 = Dense(2)(conv10)
     conv10 = core.Activation('softmax')(conv10)
 
     model = Model(input=inputs, output=conv10)
