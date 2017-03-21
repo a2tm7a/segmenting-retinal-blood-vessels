@@ -7,6 +7,8 @@ import numpy as np
 import sys
 from sklearn.metrics import classification_report, confusion_matrix
 
+from imblearn.over_sampling import SMOTE
+
 np.random.seed(1234)
 
 sys.path.append('../../segmenting-retinal-blood-vessels/')
@@ -109,10 +111,14 @@ for i in range(1):
         X_train = X_train[permutation]
         y_train = y_train[permutation]
 
-        model.fit(X_train, y_train, nb_epoch=1, validation_split=.1, verbose=1)
-
+        X_sampled, y_sampled = SMOTE.fit_sample(X_train, y_train)
         del X_train
         del y_train
+        model.fit(X_sampled, y_sampled, nb_epoch=1, validation_split=.1, verbose=1)
+
+        del X_sampled
+        del y_sampled
+
 
 model.save_weights('..' + str(config.get('data paths', 'saved_weights')) + "model.h5", overwrite=True)
 
