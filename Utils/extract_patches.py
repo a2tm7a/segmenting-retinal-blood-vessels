@@ -7,6 +7,8 @@ import numpy as np
 config = ConfigParser.RawConfigParser()
 config.read('configuration.txt')
 
+from help_functions import rgb2gray
+
 
 # Load the original img and return the extracted patches
 def get_img_training(img,
@@ -28,7 +30,7 @@ def get_img_training(img,
     assert (np.min(groundTruth) == 0 and np.max(groundTruth) == 1)
 
     print "\nimage/mask shape:"
-    print img.shape
+    print img.shape, '/', groundTruth.shape
     print "image range (min-max): " + str(np.min(img)) + ' - ' + str(np.max(img))
     print "Ground Truth are within " + str(np.min(groundTruth)) + "-" + str(np.max(groundTruth)) + "\n"
 
@@ -55,6 +57,8 @@ def extract_random(full_img, full_groundTruth, patch_h, patch_w, N_pos_patches, 
     assert (full_img.shape[0] == 3)  # check the channel is 3
     assert (full_groundTruth.shape[0] == 1)  # masks only black and white
     assert (full_img.shape[1] == full_groundTruth.shape[1] and full_img.shape[2] == full_groundTruth.shape[2])
+
+    full_img = rgb2gray(full_img)
 
     # Total images would be N_pos_patches+N_neg_patches
     patches = np.empty(((N_pos_patches + N_neg_patches), full_img.shape[0], patch_h, patch_w))
@@ -121,7 +125,7 @@ def data_consistency_check_patches(patches, patches_groundTruth):
     assert (patches.shape[2] == int(config.get('data attributes', 'patch_height')))
     assert (patches.shape[3] == int(config.get('data attributes', 'patch_width')))
 
-    assert (patches.shape[1] == 3)
+    assert (patches.shape[1] == 3 or patches.shape[1] == 1)
 
 
 # check if the patch is fully contained in the FOV

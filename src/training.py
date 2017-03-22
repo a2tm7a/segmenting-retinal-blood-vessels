@@ -99,8 +99,8 @@ def get_unet(n_ch, patch_height, patch_width):
     conv9 = Convolution2D(32, 3, 3, activation='relu', border_mode='same')(conv9)
     #
     conv10 = Convolution2D(2, 1, 1, activation='relu', border_mode='same')(conv9)
-    #conv10 = core.Reshape((2,1))(conv10)
-    #conv10 = core.Permute((2, 1))(conv10)
+    # conv10 = core.Reshape((2,1))(conv10)
+    # conv10 = core.Permute((2, 1))(conv10)
     ############
     conv10 = Flatten()(conv10)
     conv10 = Dense(2)(conv10)
@@ -162,19 +162,22 @@ while run_flag:
     print lr, " learning rate"
     print iter_count, " iteration"
     model.compile(optimizer=sgd, loss='binary_crossentropy', metrics=['accuracy'])
-    model.fit_generator(datagen_train.flow(X_train, y_train, batch_size=32), nb_epoch=1, verbose=1,
-                        samples_per_epoch=X_train.shape[0])
+    # model.fit_generator(datagen_train.flow(X_train, y_train, batch_size=32), nb_epoch=1, verbose=1,
+    #                     samples_per_epoch=X_train.shape[0])
+    model.fit(x=X_train, y=y_train, batch_size=32, nb_epoch=1, verbose=1)
 
-    y_pred = model.predict_generator(datagen_train.flow(X_train, batch_size=32), val_samples=X_train.shape[0])
+    # y_pred = model.predict_generator(datagen_train.flow(X_train, batch_size=32), val_samples=X_train.shape[0])
+    y_pred = model.predict(x=X_train, batch_size=32, verbose=1)
     fa, fr, ta, tr = class_accuracy(y_pred[:, 1], y_train[:, 1])
     print "FA FR TA TR", fa, fr, ta, tr
 
-    score = model.evaluate_generator(datagen_train.flow(X_val, y_val, batch_size=32), val_samples=X_val.shape[0])
+    # score = model.evaluate_generator(datagen_train.flow(X_val, y_val, batch_size=32), val_samples=X_val.shape[0])
+    score = model.evaluate(x=X_val, y=y_val, batch_size=32, verbose=1)
     print score[1], score[0]
     val_accuracy = score[1]
 
-    y_pred = model.predict_generator(datagen_train.flow(X_val, batch_size=32), val_samples=X_val.shape[0])
-
+    # y_pred = model.predict_generator(datagen_train.flow(X_val, batch_size=32), val_samples=X_val.shape[0])
+    y_pred = model.predict(X_val, batch_size=32, verbose=1)
     fa, fr, ta, tr = class_accuracy(y_pred[:, 1], y_val[:, 1])
     print "FA FR TA TR", fa, fr, ta, tr
 

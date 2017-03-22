@@ -43,14 +43,13 @@ def class_accuracy(y_predicted, y_value, threshold=0.5):
             true_alarm / float(total_positive_examples), true_reject / float(total_negative_examples))
 
 
-nb_classes = 2
-config = ConfigParser.RawConfigParser()
-config.read('../configuration.txt')
-
-dataset_path = str(config.get('data paths', 'path_local'))
-
-
 def load_train_data():
+    nb_classes = 2
+    config = ConfigParser.RawConfigParser()
+    config.read('../configuration.txt')
+
+    dataset_path = str(config.get('data paths', 'path_local'))
+
     # Images from 21 to 38 are taken for training
     input_sequence = np.arange(21, 39)
     np.random.shuffle(input_sequence)
@@ -102,6 +101,12 @@ def load_train_data():
 
 
 def load_val_data():
+    nb_classes = 2
+    config = ConfigParser.RawConfigParser()
+    config.read('../configuration.txt')
+
+    dataset_path = str(config.get('data paths', 'path_local'))
+
     # Testing on the left 2 images
     temp_path1 = "." + dataset_path + "training_patches_39"
     temp_path2 = "." + dataset_path + "training_patches_40"
@@ -113,3 +118,11 @@ def load_val_data():
     y_test = np.append(temp_gt1, temp_gt2, axis=0)
     y_test = np_utils.to_categorical(y_test, nb_classes)
     return X_test, y_test
+
+
+def rgb2gray(rgb):
+    assert (len(rgb.shape) == 3)  # 3D Image
+    assert (rgb.shape[0] == 3)
+    bn_imgs = rgb[0, :, :] * 0.299 + rgb[1, :, :] * 0.587 + rgb[2, :, :] * 0.114
+    bn_imgs = np.reshape(bn_imgs, (1, rgb.shape[1], rgb.shape[2]))
+    return bn_imgs

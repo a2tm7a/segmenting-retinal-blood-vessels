@@ -2,7 +2,7 @@
 #Dimensions of the patches extracted from the full images
 patch_height = 27
 patch_width = 27
-channels = 3
+channels = 1
 
 [training settings]
 #number of patches per image:
